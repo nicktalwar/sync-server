@@ -25,8 +25,7 @@ module.exports = function(app) {
       }
 
       var sources = require('../../objects/sources');
-      json.contentTypes = require('../../controllers/contentTypes').toObject(sources);
-
+      json.contentTypes = require('../../controllers/contentType').contentTypeObjects(sources);
       res.json(json);
     });
   });
