@@ -15,6 +15,8 @@ var statusAttributes = {
 };
 
 describe('new status', function() {
+  before(base.clearDatabase);
+  
   before(function() {
     this.status = new Status(statusAttributes);
   });

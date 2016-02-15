@@ -22,6 +22,8 @@ var itemAttributes = {
 };
 
 describe('new item', function() {
+  before(base.clearDatabase);
+
   before(function() {
     this.item = new Item(itemAttributes);
   });

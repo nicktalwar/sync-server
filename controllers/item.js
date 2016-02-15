@@ -479,11 +479,11 @@ module.exports = {
     });
   },
 
-  storeFile = function(user, storage, path, data, encoding, callback) {
+  storeFile: function(user, storage, path, data, encoding, callback) {
     var extension = path.split('.').pop();
     var contentType;
 
-    if (extension == 'jpg') {
+    if (extension === 'jpg') {
       contentType = 'image/jpeg';
     } else {
       contentType = 'application/json';
@@ -493,12 +493,16 @@ module.exports = {
       storageId: storage.id,
       userId:    user.id
     }, function(error, userStorageAuth) {
-      if (error) {
-        logger.error('failed to retrieve userStorageAuth for user while storing file');
+      if (error || !userStorageAuth) {
+        logger.warn('failed to retrieve userStorageAuth for user while storing file', {
+          userId: user.id,
+          storageId: storage.id,
+          error: error
+        });
         return callback(error);
       }
 
-      if (encoding == 'binary') {
+      if (encoding === 'binary') {
         fs.writeFile('/Users/markhendrickson/Desktop/binary/1.jpg', data, 'binary', function(error) {
           if (error) { 
             logger.error('failed to write binary file to disk');
@@ -510,7 +514,7 @@ module.exports = {
 
       var options = {
         host: storage.host,
-        path: storage.path(path, userStorageAuth),
+        path: storage.path(userStorageAuth, path),
         method: 'PUT',
         headers: {
           'Content-Type': contentType
@@ -536,7 +540,7 @@ module.exports = {
           return callback(error);
         });
 
-        if (encoding == 'utf8') {
+        if (encoding === 'utf8') {
           data = JSON.stringify(data);
         }
 

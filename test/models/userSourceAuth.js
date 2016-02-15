@@ -11,6 +11,8 @@ var userSourceAuthAttributes = {
 };
 
 describe('new userSourceAuth', function() {
+  before(base.clearDatabase);
+  
   before(function() {
     this.userSourceAuth = new UserSourceAuth(userSourceAuthAttributes);
   });

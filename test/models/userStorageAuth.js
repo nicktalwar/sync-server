@@ -11,6 +11,8 @@ var userStorageAuthAttributes = {
 };
 
 describe('new userStorageAuth', function() {
+  before(base.clearDatabase);
+  
   before(function() {
     this.userStorageAuth = new UserStorageAuth(userStorageAuthAttributes);
   });

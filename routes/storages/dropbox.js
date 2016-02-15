@@ -132,7 +132,6 @@ module.exports = function(app) {
 
   app.get('/storages/dropbox/auth-callback', function(req, res) {
     passport.authenticate('dropbox-oauth2', function(error, user, info) {
-      console.log("post authenticate");
       if (error) {
         logger.error('Dropbox auth failed', { error: error });
         res.redirect('/storages/dropbox/auth');

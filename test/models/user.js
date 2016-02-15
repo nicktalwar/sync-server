@@ -1,24 +1,22 @@
 var base = require('../base');
 var assert = require('assert');
+var factory = require('../factory');
 var User = require('../../models/user');
 var mongoose = require('../../lib/mongoose');
 
-var userAttributes = {
-  name: 'Jordan Mills',
-  email: 'jordan.mills@example.com'
-};
-
 describe('new user', function() {
+  before(base.clearDatabase);
+  
   before(function() {
-    this.user = new User(userAttributes);
+    this.user = new User(factory.userAttributes);
   });
 
   it('has name', function() {
-    assert.equal(this.user.name, userAttributes.name);
+    assert.equal(this.user.name, factory.userAttributes.name);
   });
 
   it('has email', function() {
-    assert.equal(this.user.email, userAttributes.email);
+    assert.equal(this.user.email, factory.userAttributes.email);
   });
 
   it('can save and have id', function(done) {
@@ -31,14 +29,14 @@ describe('new user', function() {
 
   it('can be found with findOrCreate', function(done) {
     var self = this;
-    User.findOrCreate(userAttributes, function(error, user) {
+    User.findOrCreate(factory.userAttributes, function(error, user) {
       assert.equal(user.id, self.user.id);
       done(error);
     });
   });
 
   it('can be created with findOrCreate', function(done) {
-    var newUserAttributes = userAttributes;
+    var newUserAttributes = factory.userAttributes;
     newUserAttributes.name = 'Chris Mills';
 
     var self = this;

@@ -10,6 +10,8 @@ var notificationRequestAttributes = {
 };
 
 describe('new notificationRequest', function() {
+  before(base.clearDatabase);
+  
   before(function() {
     this.notificationRequest = new NotificationRequest(notificationRequestAttributes);
   });
