@@ -1,3 +1,4 @@
+var base = require('../base');
 var assert = require('assert');
 var NotificationRequest = require('../../models/notificationRequest');
 

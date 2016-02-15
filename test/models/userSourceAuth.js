@@ -1,4 +1,4 @@
-var config = require('../config');
+var base = require('../base');
 var assert = require('assert');
 var UserSourceAuth = require('../../models/userSourceAuth');
 var mongoose = require('../../lib/mongoose');

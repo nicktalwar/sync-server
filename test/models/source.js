@@ -1,3 +1,4 @@
+var base = require('../base');
 var assert = require('assert');
 var Source = require('../../models/source');
 var ContentType = require('../../models/contentType');

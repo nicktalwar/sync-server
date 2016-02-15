@@ -1,4 +1,4 @@
-var config = require('../config');
+var base = require('../base');
 var assert = require('assert');
 var UserStorageAuth = require('../../models/userStorageAuth');
 var mongoose = require('../../lib/mongoose');

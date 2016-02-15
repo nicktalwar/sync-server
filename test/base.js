@@ -1,4 +1,5 @@
 process.env.NODE_ENV = 'test';
+var config = require('../config/test.js');
 var mongoose = require('../lib/mongoose');
 
 before(function (done) {
@@ -14,5 +15,5 @@ after(function (done) {
 });
 
 module.exports = {
-  database: 'sync_test'
+  database: config.database
 }

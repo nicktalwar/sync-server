@@ -1,4 +1,4 @@
-var config = require('../config');
+var base = require('../base');
 var assert = require('assert');
 var Item = require('../../models/item');
 var mongoose = require('../../lib/mongoose');
