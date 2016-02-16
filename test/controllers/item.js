@@ -4,7 +4,6 @@ var factory = require('../factory');
 var ItemController = require('../../controllers/item');
 var nock = require('nock');
 nock.disableNetConnect();
-//nock.recorder.rec();
 
 describe('itemController', function() {
   before(base.clearDatabase);
