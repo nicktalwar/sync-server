@@ -7,6 +7,34 @@ var UserStorageAuth = require('../models/userStorageAuth');
 var https = require('https');
 var async = require('async');
 var fs = require('fs');
+var mime = require('mime-types');
+
+var mediaTypeFromPath = function(path) {
+  var mediaType = mime.lookup(path);
+  if (!mediaType) { throw new Error('unable to determine media type from path') }
+  return mediaType;
+}
+
+var requestPut = function(stringBody, options, done) {
+  var request = https.request(options, function(response) {
+    if (response.statusCode === 401) { return done(new Error('failed to make authorized PUT request')); }
+
+    var responseBody = '';
+
+    response.on('data', function(chunk) {
+      responseBody += chunk;
+    });
+
+    response.on('end', function() {
+      return done(null, JSON.parse(responseBody));
+    });
+  }).on('error', function(error) {
+    return done(error);
+  });
+
+  request.write(stringBody);
+  request.end();
+}
 
 module.exports = {
   syncAllForAllContentTypes: function(app, user, storage, source) {
@@ -479,76 +507,39 @@ module.exports = {
     });
   },
 
-  storeFile: function(user, storage, path, data, encoding, callback) {
-    var extension = path.split('.').pop();
-    var contentType;
+  storeFile: function(user, storage, subpath, body, done) {
+    async.waterfall([
+      // Get userStorageAuth
+      function(done) {
+        UserStorageAuth.findOne({
+          storageId: storage.id,
+          userId: user.id
+        }, done);
+      },
+      // PUT request to storage
+      function(userStorageAuth, done) {
+        if (!userStorageAuth) { return done(new Error('failed to retrieve userStorageAuth')); }
 
-    if (extension === 'jpg') {
-      contentType = 'image/jpeg';
-    } else {
-      contentType = 'application/json';
-    }
-
-    UserStorageAuth.findOne({
-      storageId: storage.id,
-      userId:    user.id
-    }, function(error, userStorageAuth) {
-      if (error || !userStorageAuth) {
-        logger.warn('failed to retrieve userStorageAuth for user while storing file', {
+        requestPut(body, {
+          host: storage.host,
+          path: storage.storeFilePath(userStorageAuth, subpath),
+          method: 'PUT',
+          headers: { 
+            'Content-Type': mediaTypeFromPath(subpath),
+            'Content-Length': body.length
+          }
+        }, done);
+      }
+    ], function(error, responseData) {
+      if (error) {
+        logger.error(error.message, {
           userId: user.id,
           storageId: storage.id,
+          subpath: subpath,
           error: error
         });
-        return callback(error);
       }
-
-      if (encoding === 'binary') {
-        fs.writeFile('/Users/markhendrickson/Desktop/binary/1.jpg', data, 'binary', function(error) {
-          if (error) { 
-            logger.error('failed to write binary file to disk');
-          } else {
-            logger.trace('wrote binary file to disk');
-          }
-        });
-      }
-
-      var options = {
-        host: storage.host,
-        path: storage.path(userStorageAuth, path),
-        method: 'PUT',
-        headers: {
-          'Content-Type': contentType
-        }
-      };
-
-      try {
-        var req = https.request(options, function(res) {
-          if (res.statusCode == 401) {
-            return callback(new Error('unauthorized request'));
-          }
-
-          var data = '';
-
-          res.on('data', function(chunk) {
-            data += chunk;
-          });
-
-          res.on('end', function() {
-            callback(null, data);
-          });
-        }).on('error', function(error) {
-          return callback(error);
-        });
-
-        if (encoding === 'utf8') {
-          data = JSON.stringify(data);
-        }
-
-        req.write(data);
-        req.end();
-      } catch (error) {
-        return callback(error);
-      }
+      done(error, responseData);
     });
   }
 }

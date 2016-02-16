@@ -1,8 +1,16 @@
 module.exports = {
   id: 'dropbox',
-  host: 'api-content.dropbox.com',
+  host: 'content.dropboxapi.com',
 
-  path: function(userStorageAuth, path) {
-    return '/1/files_put/sandbox/' + path + '?access_token=' + userStorageAuth.storageToken;
+  storeFilePath: function(userStorageAuth, subpath) {
+    if (!subpath) {
+      throw Error('subpath needed to generate dropbox storage storeFilePath');
+    }
+
+    if (!userStorageAuth || !userStorageAuth.storageToken) {
+      throw Error('userStorageAuth with storageToken needed to generate dropbox storage storeFilePath');
+    }
+
+    return '/1/files_put/sandbox/' + subpath + '?overwrite=false&access_token=' + userStorageAuth.storageToken;
   }
 };
