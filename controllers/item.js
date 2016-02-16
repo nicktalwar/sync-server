@@ -17,8 +17,6 @@ var mediaTypeFromPath = function(path) {
 
 var requestPut = function(stringBody, options, done) {
   var request = https.request(options, function(response) {
-    if (response.statusCode === 401) { return done(new Error('failed to make authorized PUT request')); }
-
     var responseBody = '';
 
     response.on('data', function(chunk) {
@@ -26,7 +24,10 @@ var requestPut = function(stringBody, options, done) {
     });
 
     response.on('end', function() {
-      return done(null, JSON.parse(responseBody));
+      return done(null, {
+        statusCode: response.statusCode,
+        body: JSON.parse(responseBody)
+      });
     });
   }).on('error', function(error) {
     return done(error);
@@ -35,6 +36,22 @@ var requestPut = function(stringBody, options, done) {
   request.write(stringBody);
   request.end();
 }
+
+var storageRequestError = function(storage, statusCode) {
+  var errorMessage = 'failed request (status code ' + statusCode + ')';
+
+  if (storage.requestErrorMessage !== 'undefined') {
+    var storageErrorMessage = storage.requestErrorMessage(statusCode);
+
+    if (storageErrorMessage) {
+      return new Error(errorMessage + ': ' + storageErrorMessage);
+    } else {
+      return new Error(errorMessage); 
+    }
+  } else {
+    return new Error(errorMessage); 
+  }
+};
 
 module.exports = {
   syncAllForAllContentTypes: function(app, user, storage, source) {
@@ -509,6 +526,14 @@ module.exports = {
 
   storeFile: function(user, storage, subpath, body, done) {
     async.waterfall([
+      // Check body type
+      function(done) {
+        if (typeof body !== 'string') {
+          done(new Error('body needs to be string to store file'));
+        } else {
+          done();
+        }
+      },
       // Get userStorageAuth
       function(done) {
         UserStorageAuth.findOne({
@@ -529,8 +554,16 @@ module.exports = {
             'Content-Length': body.length
           }
         }, done);
+      },
+      // Parse response from storage
+      function(response, done) {
+        if (response.statusCode !== 200) {
+          done(storageRequestError(storage, response.statusCode));
+        } else {
+          done(null, response.body);
+        }
       }
-    ], function(error, responseData) {
+    ], function(error, responseBody) {
       if (error) {
         logger.error(error.message, {
           userId: user.id,
@@ -538,8 +571,15 @@ module.exports = {
           subpath: subpath,
           error: error
         });
+
+        if (typeof done !== 'undefined') {
+          done(error);
+        } else {
+          throw error;
+        }
+      } else if(typeof done !== 'undefined') {
+        done(null, responseBody);
       }
-      done(error, responseData);
     });
   }
 }
