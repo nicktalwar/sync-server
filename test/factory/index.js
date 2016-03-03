@@ -14,16 +14,6 @@ module.exports = {
     id: 'widget'
   },
 
-  itemAttributes: {
-    syncAttemptedAt: new Date(2015, 1, 1, 1, 1, 1, 1),
-    syncVerifiedAt: new Date(2015, 1, 1, 1, 2, 1, 1),
-    syncFailedAt: new Date(2015, 1, 1, 1, 3, 1, 1),
-    bytes: 12345,
-    description: 'Item description',
-    error: 'Item error',
-    data: "hello world"
-  },
-
   sourceAttributes: {
     id: 'megaplex',
     name: 'Megaplex',
@@ -60,23 +50,31 @@ module.exports = {
     storageUserId: 'userStorageAuthStorageUserId'
   },
 
-  // File Attributes
-
   textFileAttributes: {
     body: 'hello world',
     subpath: 'storeFile.txt',
-    responseBody: {
+    responseBody: { /* note: omits path, which depends on item ID */
       'size': '0.011KB',
       'rev': '35e97029684fe',
       'thumb_exists': false,
       'bytes': 11,
       'modified': 'Tue, 19 Jul 2011 21:55:38 +0000',
-      'path': '/storeFile.txt',
       'is_dir': false,
       'icon': 'page_white',
       'root': 'app_folder',
       'mime_type': 'text/plain'
     }
+  },
+
+  itemAttributes: {
+    syncAttemptedAt: new Date(2015, 1, 1, 1, 1, 1, 1),
+    syncVerifiedAt: new Date(2015, 1, 1, 1, 2, 1, 1),
+    syncFailedAt: new Date(2015, 1, 1, 1, 3, 1, 1),
+    bytes: 12345,
+    description: 'Item description',
+    error: 'Item error',
+    data: 'hello world',
+    mimeType: 'text/plain'
   },
 
   // Objects
@@ -95,20 +93,11 @@ module.exports = {
       // Create item
       function(user, done) {
         var itemAttributes = self.itemAttributes;
-        self.contentType = self.contentType();
-        self.source = self.source;
         itemAttributes.userId = user.id;
         itemAttributes.storageId = self.storage().id;
-        itemAttributes.sourceId = self.source.id;
-        itemAttributes.contentTypeId = self.contentType.id;
+        itemAttributes.sourceId = self.source().id;
+        itemAttributes.contentTypeId = self.contentType().id;
         Item.create(itemAttributes, done);
-      },
-      // Update item path
-      function(item, done) {
-        item.path = '/' + self.contentType.pluralId + '/' + self.source.id + '/' + item.id + '.txt';
-        item.save(function(error) {
-          done(error, item);
-        });
       }
     ], function(error, item) {
       done(error, item);

@@ -392,7 +392,6 @@ module.exports = {
         logger.trace('stored item', { item_id: item.id });
         item.syncVerifiedAt = Date.now();
         item.bytes = responseBody.bytes;
-        item.path = responseBody.path;
 
         item.save(function(error) {
           if (error) {
@@ -406,10 +405,10 @@ module.exports = {
             });
           }
 
-          done(error);
+          done(error, responseBody);
         });
       }
-    ], function(error) {
+    ], function(error, responseBody) {
       if (error) {
         logger.error('failed to store item', {
           item_id: item.id,
@@ -426,10 +425,10 @@ module.exports = {
             });
           }
 
-          done(error);
+          done(error, responseBody);
         });
       } else {
-        done();
+        done(null, responseBody);
       }
     });
 

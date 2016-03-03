@@ -1,5 +1,7 @@
 var logger = require('../lib/logger');
 var mongoose = require('../lib/mongoose');
+var ContentType = require('./contentType');
+var mime = require('mime-types');
   
 var itemSchema = mongoose.Schema({
   userId: String,
@@ -11,10 +13,10 @@ var itemSchema = mongoose.Schema({
   syncVerifiedAt: Date,
   syncFailedAt: Date,
   bytes: Number,
-  path: String,
   description: String,
   error: String,
-  data: String
+  data: String,
+  mimeType: String
 });
 
 itemSchema.set('toObject', { getters: true });
@@ -41,5 +43,13 @@ itemSchema.statics.findOrCreate = function(attributes, callback) {
     }
   });
 };
+
+itemSchema.virtual('extension').get(function() {
+  return mime.extension(this.mimeType);
+});
+
+itemSchema.virtual('path').get(function() {
+  return (this.id && this.contentTypeId && this.sourceId) ? '/' + this.contentTypeId + '/' + this.sourceId + '/' + this.id + '.' + this.extension : null;
+});
 
 module.exports = mongoose.model('Item', itemSchema);

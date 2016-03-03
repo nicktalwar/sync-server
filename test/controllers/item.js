@@ -12,10 +12,8 @@ var storeTextFile = function(user, storage, userStorageAuth, statusCode, done) {
   var path = storage.storeFilePath(userStorageAuth, factory.textFileAttributes.subpath);
   nock('https://' + storage.host).put(path, factory.textFileAttributes.body).reply(statusCode, factory.textFileAttributes.responseBody);
 
-  var self = this;
   ItemController.storeFile(user, storage, factory.textFileAttributes.subpath, factory.textFileAttributes.body, function(error, responseBody) {
-    self.responseBody = responseBody;
-    done(error);
+    done(error, responseBody);
   });
 };
 
@@ -48,11 +46,16 @@ describe('itemController', function() {
 
     describe('with string body and txt extension', function(done) {
       before(function(done) {
-        storeTextFile(this.user, this.storage, this.userStorageAuth, 200, done);
+        var self = this;
+        storeTextFile(this.user, this.storage, this.userStorageAuth, 200, function(error, responseBody) {
+          self.responseBody = responseBody;
+          done(error);
+        });
       });
 
       it('is stored with matching response body', function() {
-        assert.equal(JSON.stringify(this.responseBody), JSON.stringify(this.responseBodyMock));
+        assert.notEqual(JSON.stringify(this.responseBody), undefined);
+        assert.equal(JSON.stringify(this.responseBody), JSON.stringify(factory.textFileAttributes.responseBody));
       });
     });
 
@@ -102,27 +105,18 @@ describe('itemController', function() {
 
     before(function(done) {
       var path = this.storage.storeFilePath(this.userStorageAuth, this.item.path);
-      nock('https://' + this.storage.host).put(path, JSON.stringify(this.item.data)).reply(200, {
-        'size': '1KB',
-        'rev': '35e97029684fe',
-        'thumb_exists': false,
-        'bytes': 11000,
-        'modified': 'Tue, 19 Jul 2011 21:55:38 +0000',
-        'path': this.item.path,
-        'is_dir': false,
-        'icon': 'page_white',
-        'root': 'app_folder',
-        'mime_type': 'text/plain',
-        'data': this.item.data
-      });
+      nock('https://' + this.storage.host).put(path, JSON.stringify(this.item.data)).reply(200, factory.textFileAttributes.responseBody);
 
-      ItemController.storeItem(this.item, function(error) {
+      var self = this;
+      ItemController.storeItem(this.item, function(error, responseBody) {
+        self.responseBody = responseBody;
         done(error);
       });
     });
 
     it('is stored with matching response body', function() {
-
+      assert.notEqual(JSON.stringify(this.responseBody), undefined);
+      assert.equal(JSON.stringify(this.responseBody), JSON.stringify(factory.textFileAttributes.responseBody));
     });
 
     it('fails attempt without item');

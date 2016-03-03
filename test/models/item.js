@@ -116,6 +116,7 @@ describe('new item', function() {
     });
   });
 
+  it('fails creation without mimeType');
   it('fails creation with invalid storageId');
   it('fails creation with invalid sourceId');
   it('fails creation with invalid contentTypeId');
