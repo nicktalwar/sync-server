@@ -1,8 +1,45 @@
+var async = require('async');
+var ContentType = require('../../models/contentType');
+var Item = require('../../models/item');
+var Source = require('../../models/source');
+var Storage = require('../../models/storage');
 var User = require('../../models/user');
+var UserSourceAuth = require('../../models/userSourceAuth');
 var UserStorageAuth = require('../../models/userStorageAuth');
 
 module.exports = {
   // Attributes
+
+  contentTypeAttributes: {
+    id: 'widget'
+  },
+
+  itemAttributes: {
+    syncAttemptedAt: new Date(2015, 1, 1, 1, 1, 1, 1),
+    syncVerifiedAt: new Date(2015, 1, 1, 1, 2, 1, 1),
+    syncFailedAt: new Date(2015, 1, 1, 1, 3, 1, 1),
+    bytes: 12345,
+    description: 'Item description',
+    error: 'Item error',
+    data: "hello world"
+  },
+
+  sourceAttributes: {
+    id: 'megaplex',
+    name: 'Megaplex',
+    enabled: true,
+    logoGlyphPath: '/images/logos/megaplex.svg',
+    contentTypes: [
+      new ContentType({ id: 'widget' }),
+      new ContentType({ id: 'gadget' })
+    ],
+    host: 'megaplex.example.com',
+    apiVersion: 5,
+    defaultItemsLimit: 98,
+    clientId: 'megaplexClientId',
+    clientSecret: 'megaplexClientSecret',
+    itemAssetLinks: []
+  },
 
   storageAttributes: {
     id: "dropbox"
@@ -13,40 +50,140 @@ module.exports = {
     email: 'jordan.mills@example.com'
   },
 
+  userSourceAuthAttributes: {
+    sourceToken: 'userSourceAuthSourceToken',
+    sourceUserId: 'userSourceAuthSourceUserId'
+  },
+
   userStorageAuthAttributes: {
-    storageToken: "userStorageAuthAttributesStorageToken",
-    storageUserId: "userStorageAuthAttributesUserId"
+    storageToken: 'userStorageAuthStorageToken',
+    storageUserId: 'userStorageAuthStorageUserId'
+  },
+
+  // File Attributes
+
+  textFileAttributes: {
+    body: 'hello world',
+    subpath: 'storeFile.txt',
+    responseBody: {
+      'size': '0.011KB',
+      'rev': '35e97029684fe',
+      'thumb_exists': false,
+      'bytes': 11,
+      'modified': 'Tue, 19 Jul 2011 21:55:38 +0000',
+      'path': '/storeFile.txt',
+      'is_dir': false,
+      'icon': 'page_white',
+      'root': 'app_folder',
+      'mime_type': 'text/plain'
+    }
   },
 
   // Objects
 
+  contentType: function() {
+    return new ContentType(this.contentTypeAttributes);
+  },
+
+  item: function(done) {
+    var self = this;
+    async.waterfall([
+      // Get user
+      function(done) {
+        self.user(done);
+      },
+      // Create item
+      function(user, done) {
+        var itemAttributes = self.itemAttributes;
+        self.contentType = self.contentType();
+        self.source = self.source;
+        itemAttributes.userId = user.id;
+        itemAttributes.storageId = self.storage().id;
+        itemAttributes.sourceId = self.source.id;
+        itemAttributes.contentTypeId = self.contentType.id;
+        Item.create(itemAttributes, done);
+      },
+      // Update item path
+      function(item, done) {
+        item.path = '/' + self.contentType.pluralId + '/' + self.source.id + '/' + item.id + '.txt';
+        item.save(function(error) {
+          done(error, item);
+        });
+      }
+    ], function(error, item) {
+      done(error, item);
+    });
+  },
+
+  source: function() {
+    return new Source(this.sourceAttributes);
+  },
+
   storage: function() {
-    return require('../../objects/storages/' + this.storageAttributes.id);
+    return new Storage(this.storageAttributes);
   },
 
-  user: function() {
-    return new User(this.userAttributes);
-  },
-
-  userStorageAuth: function(user, storage) {
-    var userStorageAuthAttributes = this.userStorageAuthAttributes;
-    userStorageAuthAttributes.userId = user.id;
-    userStorageAuthAttributes.storageId = storage.id;
-    return new UserStorageAuth(userStorageAuthAttributes);
-  },
-
-  // Saved objects
-
-  savedUser: function(done) {
-    var user = this.user();
-    user.save(function(error) {
+  user: function(done) {
+    User.create(this.userAttributes, function(error, user) {
       done(error, user);
     });
   },
 
-  savedUserStorageAuth: function(user, storage, done) {
-    var userStorageAuth = this.userStorageAuth(user, storage);
-    userStorageAuth.save(function(error) {
+  userSourceAuth: function(done) {
+    var self = this;
+    async.waterfall([
+      // Get user
+      function(done) {
+        self.user(done);
+      },
+      // Create userSourceAuth
+      function(user, done) {
+        var userSourceAuthAttributes = self.userSourceAuthAttributes;
+        userSourceAuthAttributes.userId = user.id;
+        userSourceAuthAttributes.sourceId = self.source.id;
+        UserSourceAuth.create(userSourceAuthAttributes, done);
+      },
+    ], function(error, userSourceAuth) {
+      done(error, userSourceAuth);
+    });
+  },
+
+  userStorageAuth: function(userId, storageId, done) {
+    // Support done as prioritized parameter over optional others
+    if (arguments.length === 2) {
+      done = storageId;
+      storageId = null;
+    } else if (arguments.length === 1) {
+      done = userId;
+      userId = null;
+    }
+
+    var self = this;
+    async.waterfall([
+      // Get user
+      function(done) {
+        if (!userId) {
+          self.user(done);
+        } else {
+          User.findById(userId, done);
+        }
+      },
+      // Create userStorageAuth
+      function(user, done) {
+        if (!user) {
+          return done(new Error('user not found with id'));
+        }
+
+        if (!storageId) {
+          storageId = self.storage().id;
+        }
+
+        var userStorageAuthAttributes = self.userStorageAuthAttributes;
+        userStorageAuthAttributes.userId = user.id;
+        userStorageAuthAttributes.storageId = storageId;
+        UserStorageAuth.create(userStorageAuthAttributes, done);
+      },
+    ], function(error, userStorageAuth) {
       done(error, userStorageAuth);
     });
   }

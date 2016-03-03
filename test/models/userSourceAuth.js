@@ -2,35 +2,33 @@ var base = require('../base');
 var assert = require('assert');
 var UserSourceAuth = require('../../models/userSourceAuth');
 var mongoose = require('../../lib/mongoose');
-
-var userSourceAuthAttributes = {
-  userId: 'userSourceAuthUserId',
-  sourceId: 'userSourceAuthSourceId',
-  sourceToken: 'userSourceAuthSourceToken',
-  sourceUserId: 'userSourceAuthSourceUserId'
-};
+var factory = require('../factory');
 
 describe('new userSourceAuth', function() {
   before(base.clearDatabase);
   
-  before(function() {
-    this.userSourceAuth = new UserSourceAuth(userSourceAuthAttributes);
+  before(function(done) {
+    var self = this;
+    this.userSourceAuth = factory.userSourceAuth(function(error, userSourceAuth) {
+      self.userSourceAuth = userSourceAuth;
+      done(error);
+    });
   });
 
   it('has userId', function() {
-    assert.equal(this.userSourceAuth.userId, userSourceAuthAttributes.userId);
+    assert.equal(this.userSourceAuth.userId, factory.userSourceAuthAttributes.userId);
   });
 
   it('has sourceId', function() {
-    assert.equal(this.userSourceAuth.sourceId, userSourceAuthAttributes.sourceId);
+    assert.equal(this.userSourceAuth.sourceId, factory.userSourceAuthAttributes.sourceId);
   });
 
   it('has sourceToken', function() {
-    assert.equal(this.userSourceAuth.sourceToken, userSourceAuthAttributes.sourceToken);
+    assert.equal(this.userSourceAuth.sourceToken, factory.userSourceAuthAttributes.sourceToken);
   });
 
   it('has sourceUserId', function() {
-    assert.equal(this.userSourceAuth.sourceUserId, userSourceAuthAttributes.sourceUserId);
+    assert.equal(this.userSourceAuth.sourceUserId, factory.userSourceAuthAttributes.sourceUserId);
   });
 
   it('can save and have id', function(done) {
@@ -43,14 +41,14 @@ describe('new userSourceAuth', function() {
 
   it('can be found with findOrCreate', function(done) {
     var self = this;
-    UserSourceAuth.findOrCreate(userSourceAuthAttributes, function(error, userSourceAuth) {
+    UserSourceAuth.findOrCreate(factory.userSourceAuthAttributes, function(error, userSourceAuth) {
       assert.equal(userSourceAuth.id, self.userSourceAuth.id);
       done(error);
     });
   });
 
   it('can be created with findOrCreate', function(done) {
-    var newUserSourceAuthAttributes = userSourceAuthAttributes;
+    var newUserSourceAuthAttributes = factory.userSourceAuthAttributes;
     newUserSourceAuthAttributes.userId = 'newUserSourceAuthUserId';
 
     var self = this;

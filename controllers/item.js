@@ -1,7 +1,10 @@
 require('../lib/prototypes/object');
 var logger = require('../lib/logger');
+var ContentType = require('../models/contentType');
 var Status = require('../models/status');
+var Storage = require('../models/storage');
 var Item = require('../models/item');
+var User = require('../models/user');
 var UserSourceAuth = require('../models/userSourceAuth');
 var UserStorageAuth = require('../models/userStorageAuth');
 var https = require('https');
@@ -342,7 +345,13 @@ module.exports = {
 
               callback(error);
             } else {
-              self.storeItem(app, user, storage, source, contentType, item, callback);
+              self.storeItem(app, user, storage, source, contentType, item, function(error) {
+                if (!error) {
+                  app.emit('itemSyncVerified', item);
+                }
+
+                callback(error);
+              });
             }
           });
         }
@@ -350,24 +359,59 @@ module.exports = {
     });
   },
 
-  storeItem: function(app, user, storage, source, contentType, item, callback) {
+  storeItem: function(item, done) {
+    if (!item || !(item instanceof Item)) { return done(new Error('item not provided as parameter')); };
+
+    logger.trace('started to store item', { item_id: item.id });
+
     var self = this;
+    async.waterfall([
+      // Find user
+      function(done) {
+        User.findById(item.userId, done);
+      },
 
-    logger.trace('started to store item', {
-      userId: user.id,
-      storageId: storage.id,
-      sourceId: source.id,
-      contentTypeId: contentType.id,
-      item_id: item.id
-    });
+      // Verify user, set storage, determine subpath
+      function(user, done) {
+        if (!user) {
+          done(new Error('user not found for item'));
+        } else {
+          self.user = user;
+          self.storage = new Storage({id: item.storageId});
+          done(null, item.path);
+        }
+      },
 
-    var storeCallback = function(error, response) {
+      // Store file
+      function(subpath, done) {
+        self.storeFile(self.user, self.storage, subpath, JSON.stringify(item.data), done);
+      },
+
+      // Log and update item
+      function(responseBody, done) {
+        logger.trace('stored item', { item_id: item.id });
+        item.syncVerifiedAt = Date.now();
+        item.bytes = responseBody.bytes;
+        item.path = responseBody.path;
+
+        item.save(function(error) {
+          if (error) {
+            logger.error('failed to update item after storing it', {
+              item_id: item.id,
+              error: error
+            });
+          } else {
+            logger.trace('updated item after storing it', {
+              item_id: item.id
+            });
+          }
+
+          done(error);
+        });
+      }
+    ], function(error) {
       if (error) {
-        logger.error('failed to store item', { 
-          userId: user.id,
-          storageId: storage.id,
-          sourceId: source.id,
-          contentTypeId: contentType.id,
+        logger.error('failed to store item', {
           item_id: item.id,
           message: error.message
         });
@@ -377,70 +421,22 @@ module.exports = {
         item.save(function(saveError) {
           if (saveError) {
             logger.error('failed to update item after failure to store it', {
-              userId: user.id,
-              storageId: storage.id,
-              sourceId: source.id,
-              contentTypeId: contentType.id,
               item_id: item.id,
               error: saveError 
             });
           }
 
-          return callback(error);
+          done(error);
         });
+      } else {
+        done();
       }
+    });
 
-      try {
-        response = JSON.parse(JSON.stringify(response));
-      } catch(error) {
-        logger.error('failed to parse store item response', { response: response });
-        return callback(error);
-      }
 
-      logger.trace('stored item', { 
-        userId: user.id,
-        storageId: storage.id,
-        sourceId: source.id,
-        contentTypeId: contentType.id,
-        item_id: item.id,
-        response: response
-      });
 
-      item.syncVerifiedAt = Date.now();
-      item.bytes = response.bytes;
-      item.path = response.path;
-      item.save(function(error) {
-        if (error) {
-          logger.error('failed to update item after storing it', {
-            userId: user.id,
-            storageId: storage.id,
-            sourceId: source.id,
-            contentTypeId: contentType.id,
-            item_id: item.id,
-            error: error
-          });
 
-          callback(error);
-        } else {
-          app.emit('itemSyncVerified', item);
-
-          logger.trace('updated item after storing it', {
-            userId: user.id,
-            storageId: storage.id,
-            sourceId: source.id,
-            contentTypeId: contentType.id,
-            item_id: item.id
-          });
-
-          callback();
-        }
-      });
-    };
-
-    var path = '/' + contentType.pluralId + '/raw-synced-meta/' + item.id + '.json';
-    this.storeFile(user, storage, path, item.data, 'utf8', storeCallback);
-
-    if (typeof source.itemAssetLinks !== 'undefined') {
+    if (false && typeof source.itemAssetLinks !== 'undefined') {
       for (var key in source.itemAssetLinks) {
         var url = Object.valueByString(item.data, source.itemAssetLinks[key]);
         var extension = url.split('.').pop();
@@ -534,6 +530,7 @@ module.exports = {
           done();
         }
       },
+
       // Get userStorageAuth
       function(done) {
         UserStorageAuth.findOne({
@@ -541,6 +538,7 @@ module.exports = {
           userId: user.id
         }, done);
       },
+
       // PUT request to storage
       function(userStorageAuth, done) {
         if (!userStorageAuth) { return done(new Error('failed to retrieve userStorageAuth')); }
@@ -555,6 +553,7 @@ module.exports = {
           }
         }, done);
       },
+
       // Parse response from storage
       function(response, done) {
         if (response.statusCode !== 200) {

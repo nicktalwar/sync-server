@@ -2,10 +2,18 @@ var pluralize = require('pluralize');
 var prototype = require('../lib/prototypes/array');
 var prototype = require('../lib/prototypes/string');
 
-module.exports = function ContentType(id) {
-  this.id = id;
-  this.pluralId = pluralize(id);
-  this.name = id.capitalizeFirstLetter();
+module.exports = function ContentType(attributes) {
+  if (typeof attributes !== 'object') {
+    throw Error('attributes parameter not object');
+  }
+
+  if (!attributes.id) {
+    throw Error('attributes.id not found');
+  }
+
+  this.id = attributes.id;
+  this.pluralId = pluralize(this.id);
+  this.name = this.id.capitalizeFirstLetter();
   this.pluralName = this.pluralId.capitalizeFirstLetter();
 
   this.toObject = function(sources) {

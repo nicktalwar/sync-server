@@ -6,7 +6,7 @@ module.exports = {
 
     var contentTypeObjects = [];
     contentTypeIds.forEach(function(contentTypeId) {
-      contentTypeObjects.push(new ContentType(contentTypeId).toObject(sources));
+      contentTypeObjects.push(new ContentType({ id: contentTypeId }).toObject(sources));
     });
 
     return contentTypeObjects;

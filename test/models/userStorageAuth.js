@@ -2,35 +2,33 @@ var base = require('../base');
 var assert = require('assert');
 var UserStorageAuth = require('../../models/userStorageAuth');
 var mongoose = require('../../lib/mongoose');
-
-var userStorageAuthAttributes = {
-  userId: 'userStorageAuthUserId',
-  storageId: 'userStorageAuthStorageId',
-  storageToken: 'userStorageAuthStorageToken',
-  storageUserId: 'userStorageAuthStorageUserId'
-};
+var factory = require('../factory');
 
 describe('new userStorageAuth', function() {
   before(base.clearDatabase);
   
-  before(function() {
-    this.userStorageAuth = new UserStorageAuth(userStorageAuthAttributes);
+  before(function(done) {
+    var self = this;
+    this.userStorageAuth = factory.userStorageAuth(function(error, userStorageAuth) {
+      self.userStorageAuth = userStorageAuth;
+      done(error);
+    });
   });
 
   it('has userId', function() {
-    assert.equal(this.userStorageAuth.userId, userStorageAuthAttributes.userId);
+    assert.equal(this.userStorageAuth.userId, factory.userStorageAuthAttributes.userId);
   });
 
   it('has storageId', function() {
-    assert.equal(this.userStorageAuth.storageId, userStorageAuthAttributes.storageId);
+    assert.equal(this.userStorageAuth.storageId, factory.userStorageAuthAttributes.storageId);
   });
 
   it('has storageToken', function() {
-    assert.equal(this.userStorageAuth.storageToken, userStorageAuthAttributes.storageToken);
+    assert.equal(this.userStorageAuth.storageToken, factory.userStorageAuthAttributes.storageToken);
   });
 
   it('has storageUserId', function() {
-    assert.equal(this.userStorageAuth.storageUserId, userStorageAuthAttributes.storageUserId);
+    assert.equal(this.userStorageAuth.storageUserId, factory.userStorageAuthAttributes.storageUserId);
   });
 
   it('can save and have id', function(done) {
@@ -43,14 +41,14 @@ describe('new userStorageAuth', function() {
 
   it('can be found with findOrCreate', function(done) {
     var self = this;
-    UserStorageAuth.findOrCreate(userStorageAuthAttributes, function(error, userStorageAuth) {
+    UserStorageAuth.findOrCreate(factory.userStorageAuthAttributes, function(error, userStorageAuth) {
       assert.equal(userStorageAuth.id, self.userStorageAuth.id);
       done(error);
     });
   });
 
   it('can be created with findOrCreate', function(done) {
-    var newUserStorageAuthAttributes = userStorageAuthAttributes;
+    var newUserStorageAuthAttributes = factory.userStorageAuthAttributes;
     newUserStorageAuthAttributes.userId = 'newUserStorageAuthUserId';
 
     var self = this;

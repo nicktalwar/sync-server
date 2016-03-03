@@ -14,7 +14,7 @@ var itemSchema = mongoose.Schema({
   path: String,
   description: String,
   error: String,
-  data: Object
+  data: String
 });
 
 itemSchema.set('toObject', { getters: true });

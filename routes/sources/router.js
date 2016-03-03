@@ -9,6 +9,7 @@ module.exports = function(app, source) {
   var UserStorageAuth = require('../../models/userStorageAuth');
   var User = require('../../models/user');
   var Item = require('../../models/item');
+  var Storage = require('../../models/storage');
 
   var itemController = require('../../controllers/item');
   var callbackURL = 'https://' + app.host + '/sources/' + sourceId + '/auth-callback';
@@ -134,7 +135,7 @@ module.exports = function(app, source) {
           error: error
         });
       } else {
-        var storage = require('../../objects/storages/' + userStorageAuth.storageId);
+        var storage = new Storage({ id: userStorageAuth.storageId });
         itemController.syncAllForAllContentTypes(app, req.user, storage, source);
       }
 
