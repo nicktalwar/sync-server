@@ -81,7 +81,7 @@ describe('new contentType', function() {
     });
   });
 
-  describe('initiated with attributes lacking ID', function() {
+  describe('initiated without ID attribute', function() {
     before(function() {
       try {
         this.contentType = new ContentType({foo: 'bar'});
@@ -94,6 +94,4 @@ describe('new contentType', function() {
       assert.equal(this.error.message, 'attributes.id not found');
     });
   });
-
-  it('fails creation without id attribute');
 });

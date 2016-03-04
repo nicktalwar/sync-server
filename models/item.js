@@ -4,11 +4,11 @@ var ContentType = require('./contentType');
 var mime = require('mime-types');
   
 var itemSchema = mongoose.Schema({
-  userId: String,
-  storageId: String,
-  sourceId: String,
+  userId: { type: String, required: 'userId required' },
+  storageId: { type: String, required: 'storageId required' },
+  sourceId: { type: String, required: 'sourceId required' },
   sourceItemId: String,
-  contentTypeId: String,
+  contentTypeId: { type: String, required: 'contentTypeId required' },
   syncAttemptedAt: Date,
   syncVerifiedAt: Date,
   syncFailedAt: Date,
@@ -16,7 +16,7 @@ var itemSchema = mongoose.Schema({
   description: String,
   error: String,
   data: String,
-  mimeType: String
+  mimeType: { type: String, required: 'mimeType required' }
 });
 
 itemSchema.set('toObject', { getters: true });
