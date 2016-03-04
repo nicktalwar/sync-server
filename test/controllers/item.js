@@ -119,10 +119,50 @@ describe('itemController', function() {
       assert.equal(JSON.stringify(this.responseBody), JSON.stringify(factory.textFileAttributes.responseBody));
     });
 
-    it('fails attempt without item');
-    it('suceeds without done');
-    it('fails attempt with improper item');
-    it('fails attempt with improper done');
+    describe('without item', function() {
+      before(function(done) {
+        var self = this;
+        ItemController.storeItem(null, function(error, responseBody) {
+          self.error = error;
+          done();
+        });
+      });
+
+      it('returns error', function() {
+        assert.equal(this.error.message, 'item not provided');
+      });
+    });
+
+    describe('without valid item', function() {
+      before(function(done) {
+        var self = this;
+        ItemController.storeItem('item', function(error, responseBody) {
+          self.error = error;
+          done();
+        });
+      });
+
+      it('returns error', function() {
+        assert.equal(this.error.message, 'invalid item provided');
+      });
+    });
+
+    describe('without item or done throws error', function() {
+      before(function() {
+        var path = this.storage.storeFilePath(this.userStorageAuth, this.item.path);
+        nock('https://' + this.storage.host).put(path, JSON.stringify(this.item.data)).reply(200, factory.textFileAttributes.responseBody);
+
+        try {
+          ItemController.storeItem();
+        } catch(error) {
+          this.error = error;
+        }
+      });
+
+      it('throws error', function() {
+        assert.equal(this.error.message, 'item not provided');
+      });
+    });
   });
 
   it('syncAllForAllContentTypes');

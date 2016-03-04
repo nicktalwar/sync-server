@@ -360,7 +360,19 @@ module.exports = {
   },
 
   storeItem: function(item, done) {
-    if (!item || !(item instanceof Item)) { return done(new Error('item not provided as parameter')); };
+    if (!item) {
+      var error = new Error('item not provided');
+    } else if (!(item instanceof Item)) {
+      var error = new Error('invalid item provided');
+    }
+
+    if (error) {
+      if (done) {
+        return done(error);
+      } else {
+        throw error;
+      }
+    }
 
     logger.trace('started to store item', { item_id: item.id });
 
@@ -425,9 +437,11 @@ module.exports = {
             });
           }
 
-          done(error, responseBody);
+          if (done) {
+            done(error, responseBody);
+          }
         });
-      } else {
+      } else if (done) {
         done(null, responseBody);
       }
     });
