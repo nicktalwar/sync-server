@@ -3,7 +3,7 @@ var prototype = require('../lib/prototypes/array');
 var prototype = require('../lib/prototypes/string');
 
 module.exports = function ContentType(attributes) {
-  if (typeof attributes === 'undefined') {
+  if (typeof attributes === 'undefined' || !attributes) {
     throw Error('attributes parameter not provided');
   }
 

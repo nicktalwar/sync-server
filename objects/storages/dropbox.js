@@ -7,8 +7,12 @@ module.exports = {
       throw Error('subpath needed to generate dropbox storage storeFilePath');
     }
 
-    if (!userStorageAuth || !userStorageAuth.storageToken) {
-      throw Error('userStorageAuth with storageToken needed to generate dropbox storage storeFilePath');
+    if (typeof userStorageAuth === 'undefined' || !userStorageAuth) {
+      throw Error('userStorageAuth needed to generate dropbox storage storeFilePath');
+    }
+
+    if (typeof userStorageAuth.storageToken === 'undefined' || !userStorageAuth.storageToken) {
+      throw Error('userStorageAuth.storageToken needed to generate dropbox storage storeFilePath');
     }
 
     return '/1/files_put/sandbox/' + subpath + '?overwrite=false&access_token=' + userStorageAuth.storageToken;

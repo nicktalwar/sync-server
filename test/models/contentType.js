@@ -62,7 +62,7 @@ describe('new contentType', function() {
       }
     });
 
-    it('fails creation', function() {
+    it('throws error', function() {
       assert.equal(this.error.message, 'attributes parameter not provided');
     });
   });
@@ -76,7 +76,7 @@ describe('new contentType', function() {
       }
     });
 
-    it('fails creation', function() {
+    it('throws error', function() {
       assert.equal(this.error.message, 'attributes parameter not object');
     });
   });
@@ -90,7 +90,7 @@ describe('new contentType', function() {
       }
     });
 
-    it('fails creation', function() {
+    it('throws error', function() {
       assert.equal(this.error.message, 'attributes.id not found');
     });
   });
