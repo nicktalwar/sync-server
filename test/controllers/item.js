@@ -44,7 +44,7 @@ describe('itemController', function() {
       this.storage = factory.storage();
     });
 
-    describe('with string body and txt extension', function(done) {
+    describe('with string body and txt extension', function() {
       before(function(done) {
         var self = this;
         storeTextFile(this.user, this.storage, this.userStorageAuth, 200, function(error, responseBody) {
@@ -59,7 +59,7 @@ describe('itemController', function() {
       });
     });
 
-    describe('with path to existing file on storage', function(done) {
+    describe('with path to existing file on storage', function() {
       before(function(done) {
         var self = this;
         storeTextFile(this.user, this.storage, this.userStorageAuth, 409, function(error) {
@@ -73,15 +73,133 @@ describe('itemController', function() {
       });
     });
 
-    it('fails attempt without user');
-    it('fails attempt without storage');
-    it('fails attempt without subpath');
-    it('fails attempt without body');
-    it('fails attempt with improper user');
-    it('fails attempt with improper storage');
-    it('fails attempt with improper subpath');
-    it('fails attempt with improper body');
-    it('fails attempt with improper done');
+    describe('without user', function() {
+      before(function(done) {
+        var self = this;
+        storeTextFile(null, this.storage, this.userStorageAuth, 200, function(error) {
+          self.error = error;
+          done();
+        });
+      });
+
+      it('fails with error', function() {
+        assert.equal(this.error.message.hasSubstring('user not provided'), true);
+      });
+    });
+
+    describe('without valid user', function() {
+      before(function(done) {
+        var self = this;
+        storeTextFile('user', this.storage, this.userStorageAuth, 200, function(error) {
+          self.error = error;
+          done();
+        });
+      });
+
+      it('fails with error', function() {
+        assert.equal(this.error.message.hasSubstring('invalid user provided'), true);
+      });
+    });
+
+    describe('without storage', function() {
+      before(function(done) {
+        var self = this;
+        ItemController.storeFile(this.user, null, factory.textFileAttributes.subpath, factory.textFileAttributes.body, function(error, responseBody) {
+          self.error = error;
+          done();
+        });
+      });
+
+      it('fails with error', function() {
+        assert.equal(this.error.message.hasSubstring('storage not provided'), true);
+      });
+    });
+
+    describe('without valid storage', function() {
+      before(function(done) {
+        var self = this;
+        ItemController.storeFile(this.user, 'storage', factory.textFileAttributes.subpath, factory.textFileAttributes.body, function(error, responseBody) {
+          self.error = error;
+          done();
+        });
+      });
+
+      it('fails with error', function() {
+        assert.equal(this.error.message.hasSubstring('invalid storage provided'), true);
+      });
+    });
+
+    describe('without subpath', function() {
+      before(function(done) {
+        var self = this;
+        ItemController.storeFile(this.user, this.storage, null, factory.textFileAttributes.body, function(error, responseBody) {
+          self.error = error;
+          done();
+        });
+      });
+
+      it('fails with error', function() {
+        assert.equal(this.error.message.hasSubstring('subpath not provided'), true);
+      });
+    });
+
+    describe('with invalid subpath', function() {
+      before(function(done) {
+        var self = this;
+        ItemController.storeFile(this.user, this.storage, 3, factory.textFileAttributes.body, function(error, responseBody) {
+          self.error = error;
+          done();
+        });
+      });
+
+      it('fails with error', function() {
+        assert.equal(this.error.message.hasSubstring('invalid subpath provided'), true);
+      });
+    });
+
+    describe('without body', function() {
+      before(function(done) {
+        var self = this;
+        ItemController.storeFile(this.user, this.storage, factory.textFileAttributes.subpath, null, function(error, responseBody) {
+          self.error = error;
+          done();
+        });
+      });
+
+      it('fails with error', function() {
+        assert.equal(this.error.message.hasSubstring('body not provided'), true);
+      });
+    });
+
+    describe('with invalid body', function() {
+      before(function(done) {
+        var self = this;
+        ItemController.storeFile(this.user, this.storage, factory.textFileAttributes.subpath, 3, function(error, responseBody) {
+          self.error = error;
+          done();
+        });
+      });
+
+      it('fails with error', function() {
+        assert.equal(this.error.message.hasSubstring('invalid body provided'), true);
+      });
+    });
+
+    describe('with invalid done', function() {
+      before(function(done) {
+        var self = this;
+        try {
+          ItemController.storeFile(this.user, this.storage, factory.textFileAttributes.subpath, factory.textFileAttributes.body, 3);
+        } catch(error) {
+          self.error = error;
+          done();
+        }
+      });
+
+      it('fails with error', function() {
+        assert.equal(this.error.message.hasSubstring('invalid done provided'), true);
+      });
+    });
   });
 
   describe('storeItem', function() {

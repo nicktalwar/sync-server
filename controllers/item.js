@@ -360,7 +360,7 @@ module.exports = {
   },
 
   storeItem: function(item, done) {
-    if (!item) {
+    if (typeof item === 'undefined' || !item) {
       var error = new Error('item not provided');
     } else if (!(item instanceof Item)) {
       var error = new Error('invalid item provided');
@@ -445,43 +445,6 @@ module.exports = {
         done(null, responseBody);
       }
     });
-
-
-
-
-    if (false && typeof source.itemAssetLinks !== 'undefined') {
-      for (var key in source.itemAssetLinks) {
-        var url = Object.valueByString(item.data, source.itemAssetLinks[key]);
-        var extension = url.split('.').pop();
-
-        this.getFile(url, function(error, data) {
-          if (error) {
-            logger.error('failed to get item asset', {
-              item_id: item.id,
-              asset_url: url
-            });
-
-            callback(error);
-          } else {
-            var path = '/' + contentType.pluralId + '/' + item.id + '.' + extension;
-            self.storeFile(user, storage, path, data, 'binary', function(error, response) {
-              if (error) {
-                logger.error('failed to store item asset', {
-                  item_id: item.id,
-                  asset_url: url
-                });
-              } else {
-                logger.trace('stored item asset', {
-                  item_id: item.id,
-                  asset_key: key,
-                  asset_url: url
-                });
-              }
-            });
-          }
-        });
-      }
-    }
   },
 
   getFile: function(url, callback) {
@@ -534,6 +497,35 @@ module.exports = {
   },
 
   storeFile: function(user, storage, subpath, body, done) {
+    // Validate parameters
+    if (!user) {
+      var error = new Error('user not provided');
+    } else if (!(user instanceof User)) {
+      var error = new Error('invalid user provided');
+    } else if (!storage) {
+      var error = new Error('storage not provided');
+    } else if (!(typeof storage === 'object')) {
+      var error = new Error('invalid storage provided');
+    } else if (!subpath) {
+      var error = new Error('subpath not provided');
+    } else if (!(typeof subpath === 'string')) {
+      var error = new Error('invalid subpath provided');
+    } else if (!body) {
+      var error = new Error('body not provided');
+    } else if (!(typeof body === 'string')) {
+      var error = new Error('invalid body provided');
+    } else if (!(typeof done === 'function')) {
+      var error = new Error('invalid done provided');
+    }
+
+    if (error) {
+      if (done && (typeof done === 'function')) {
+        return done(error);
+      } else {
+        throw error;
+      }
+    }
+
     async.waterfall([
       // Check body type
       function(done) {

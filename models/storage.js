@@ -1,4 +1,4 @@
-module.exports = function(attributes) {
+module.exports = function (attributes) {
   if (typeof attributes === 'undefined' || !attributes) {
     throw Error('attributes parameter not provided');
   }
